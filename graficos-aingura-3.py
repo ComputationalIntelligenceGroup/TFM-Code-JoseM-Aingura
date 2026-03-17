@@ -13,16 +13,30 @@ from PIL import Image
 import pydot
 
 fixed_pos = {
-    "bal_150": (101.28, 157.56),
-    "bal_250": (160.07, 200.64),
-    "bal_energy_band_low": (112.88, 83.773),
-    "bal_energy_band_medium": (155.87, 72.708),
-    "bal_energy_band_high": (147.74, 125.12),
-    "6004_FTF": (192.99, 131.84),
-    "bal_350": (233.33, 91.955),
-    "6004_BPFI": (91.307, 18.0),
-    "6004_BSF": (190.3, 51.218),
-    "6004_BPFO": (56.981, 84.6),
+
+    # t-1 (izquierda)
+    "bal_150_t-1": (40, 157.56),
+    "bal_250_t-1": (80, 200.64),
+    "bal_energy_band_low_t-1": (50, 83.773),
+    "bal_energy_band_medium_t-1": (85, 72.708),
+    "bal_energy_band_high_t-1": (75, 125.12),
+    "6004_FTF_t-1": (100, 131.84),
+    "bal_350_t-1": (120, 91.955),
+    "6004_BPFI_t-1": (30, 18.0),
+    "6004_BSF_t-1": (95, 51.218),
+    "6004_BPFO_t-1": (15, 84.6),
+
+    # t (derecha)
+    "bal_150_t": (240, 157.56),
+    "bal_250_t": (280, 200.64),
+    "bal_energy_band_low_t": (250, 83.773),
+    "bal_energy_band_medium_t": (285, 72.708),
+    "bal_energy_band_high_t": (275, 125.12),
+    "6004_FTF_t": (300, 131.84),
+    "bal_350_t": (320, 91.955),
+    "6004_BPFI_t": (230, 18.0),
+    "6004_BSF_t": (295, 51.218),
+    "6004_BPFO_t": (215, 84.6),
 }
 
 # LiNGAM (causal-learn)
@@ -31,9 +45,7 @@ from matplotlib.colors import SymLogNorm
 # For drawing LiNGAM as a graph
 import networkx as nx
 
-CI_TEST = "kci"
-
-CSV_PATH = r".\normal.csv" # CAMBIAR por normal.csv para ver datos normales 
+CSV_PATH = r".\anomalous.csv" # CAMBIAR por normal.csv para ver datos normales 
 
 SEP = ";"
 TIME_COL = "timestamp"
@@ -228,7 +240,7 @@ def run_and_plot_on_chunk(df_chunk: pd.DataFrame,
     # -------------------
     # 2) FCI: graph + endpoint matrix
     # -------------------
-    indep_test = CI_TEST
+    indep_test = "fisherz"
     g, edges = fci(
         data,
         indep_test,
@@ -319,7 +331,18 @@ df = pd.read_csv(CSV_PATH, sep=SEP)
 
 
 chunk_size = 10000
+prev_chunk = None
+
 for start in range(0, len(df), chunk_size):
     df_chunk = df.iloc[start:start + chunk_size]
     print(f"\n=== Chunk rows {start}..{min(start+chunk_size, len(df))} ===")
-    run_and_plot_on_chunk(df_chunk)
+
+    if prev_chunk is not None:
+        chunk_t_minus_1 = prev_chunk.reset_index(drop=True).add_suffix('_t-1')
+        chunk_t = df_chunk.reset_index(drop=True).add_suffix('_t')
+
+        df_concat = pd.concat([chunk_t_minus_1, chunk_t], axis=1)
+
+        run_and_plot_on_chunk(df_concat)
+
+    prev_chunk = df_chunk
