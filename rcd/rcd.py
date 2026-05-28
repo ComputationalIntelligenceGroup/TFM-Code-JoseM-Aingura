@@ -23,7 +23,7 @@ LOCAL_ALPHA = 0.01
 DEFAULT_GAMMA = 5
 
 # SRC_DIR = 'sock-shop-data/carts-mem/1/'
-SRC_DIR = 'data/s-2/n-10-d-3-an-1-nor-s-1000-an-s-1000/'
+SRC_DIR = r'C:\Users\chdem\0UNIVERSIDAD\Aingura\data\rca_data'
 
 # Split the dataset into multiple subsets
 def create_chunks(df, gamma):

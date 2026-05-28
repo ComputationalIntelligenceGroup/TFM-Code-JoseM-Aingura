@@ -1,11 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_PATH = r"..\MT002_ENSAYO_3_3070_IE08_FEATURES (2)\result_folder\MT002_ENSAYO_3_3070_IE08_FEATURES.csv"
+CSV_PATH = r"..\data2\MT002_ENSAYO_3_NEW_FEATURES.csv"
 
 SEP = ";"
 TIME_COL = "timestamp"
-TIMESTAMP_UNIT = "us"  # your timestamps look like microseconds since epoch
+TIMESTAMP_UNIT = None  # your timestamps look like microseconds since epoch
 
 GAP = pd.Timedelta(days=1)     # split whenever gap > 1 day
 COLUMNS_TO_PLOT = None         # None = all columns except timestamp
@@ -45,12 +45,17 @@ def plot_multiseries(df, cols, title):
 
 # --- load ---
 df = pd.read_csv(CSV_PATH, sep=SEP)
+print(df.columns.tolist())   # debug: check real column names
 
-# robust timestamp parsing -> datetime index
-ts_int = pd.to_numeric(df[TIME_COL], errors="coerce").round().astype("Int64")
-df = df.loc[ts_int.notna()].copy()
-df["time"] = pd.to_datetime(ts_int.loc[ts_int.notna()].astype("int64"), unit=TIMESTAMP_UNIT, errors="coerce")
-df = df.dropna(subset=["time"]).set_index("time").sort_index()
+
+# optional cleanup in case headers have spaces/BOM
+df.columns = df.columns.str.strip().str.replace("\ufeff", "", regex=False)
+
+print(df.columns.tolist())   # debug: check real column names
+
+df["time"] = pd.to_datetime(df[TIME_COL], errors="coerce", utc=True)
+df = df.loc[df["time"].notna()].copy()
+df = df.set_index("time").sort_index()
 
 # columns to plot
 cols = [c for c in df.columns if c != TIME_COL]

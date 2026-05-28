@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 from sklearn.preprocessing import KBinsDiscretizer
 
-from causallearn.utils.cit import chisq
+from causallearn.utils.cit import fisherz
 from causallearn.utils.PCUtils import SkeletonDiscovery
 
 # Note: Some of the functions defined here are only used for data
 # from sock-shop or real-world application.
 
-CI_TEST = chisq
+CI_TEST = fisherz
 
 START_ALPHA = 0.001
 ALPHA_STEP = 0.1
@@ -63,10 +63,20 @@ def add_fnode(normal_df, anomalous_df):
 # Run PC (only the skeleton phase) on the given dataset.
 # The last column of the data *must* be the F-node
 def run_pc(data, alpha, localized=False, labels={}, mi=[], verbose=VERBOSE):
+    
+    # Debug: show problematic columns
+    print(data.dtypes)
+    
     if labels == {}:
         labels = {i: name for i, name in enumerate(data.columns)}
+        
+    # Force numeric for fisherz
+    for col in data.columns:
+        data[col] = pd.to_numeric(data[col], errors="raise")
 
-    np_data = data.to_numpy()
+    np_data = data.to_numpy(dtype=float)
+   
+    
     if localized:
         f_node = np_data.shape[1] - 1
         # Localized PC

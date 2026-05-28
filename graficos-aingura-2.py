@@ -31,9 +31,7 @@ from matplotlib.colors import SymLogNorm
 # For drawing LiNGAM as a graph
 import networkx as nx
 
-CI_TEST = "kci"
-
-CSV_PATH = r".\normal.csv" # CAMBIAR por normal.csv para ver datos normales 
+CSV_PATH = r"..\data\anomalous.csv" # CAMBIAR por normal.csv para ver datos normales 
 
 SEP = ";"
 TIME_COL = "timestamp"
@@ -228,7 +226,7 @@ def run_and_plot_on_chunk(df_chunk: pd.DataFrame,
     # -------------------
     # 2) FCI: graph + endpoint matrix
     # -------------------
-    indep_test = CI_TEST
+    indep_test = "fisherz"
     g, edges = fci(
         data,
         indep_test,

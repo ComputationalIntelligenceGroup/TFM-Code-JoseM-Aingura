@@ -51,7 +51,7 @@ ln -fs ~/rcd/causallearn/graph/GraphClass.py ~/env/lib/python3.8/site-packages/c
 
 #### Executing RCD with Synthetic Data
 ```sh
-./rcd.py --path [PATH_TO_DATA] --local --k 3
+./rcd.py --path C:\Users\chdem\0UNIVERSIDAD\Aingura\data\rca_data --local --k 3
 ```
 
 `--local` options enables the localized RCD while `--k` estimates the top-`k` root causes.
