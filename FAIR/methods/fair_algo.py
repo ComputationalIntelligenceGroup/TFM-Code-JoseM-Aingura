@@ -50,7 +50,7 @@ def print_prob(x):
 
 
 class MixedGumbelGate(torch.nn.Module):
-	def __init__(self, input_dim, varmask, init_offset=-3, device='cpu'):
+	def __init__(self, input_dim, varmask, init_offset=-3, device='gpu'):
 		super(MixedGumbelGate, self).__init__()
 		self.logits = torch.nn.Parameter((torch.rand(input_dim, device=device) - 0.5) * 1e-5 + init_offset)
 		self.mask = torch.tensor(varmask, device=device).float()
@@ -172,7 +172,7 @@ class FairGumbelAlgo(object):
 		assert self.model.num_envs == num_envs
 		assert self.model.dim_x == dim_x
 
-	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=100, device='cpu', log=False):
+	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=100, device='gpu', log=False):
 		# Build multi-environment training dataset that contains 'self.num_envs' number of environments
 		features, responses = me_train_data		
 		assert len(features) == self.num_envs
