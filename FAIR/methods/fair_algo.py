@@ -206,6 +206,15 @@ class FairGumbelAlgo(object):
 			print('CUDA not available, falling back to CPU')
 			device = torch.device('cpu')
 
+		# check compute capability to avoid "no kernel image" errors on older GPUs
+		if device.type == 'cuda':
+			# determine device index
+			dev_index = device.index if device.index is not None else 0
+			cap = torch.cuda.get_device_capability(dev_index)
+			if cap[0] < 7:
+				print(f"GPU compute capability {cap[0]}.{cap[1]} is lower than supported (7.0). Falling back to CPU.")
+				device = torch.device('cpu')
+
 		# move model to device
 		self.model.to(device)
 
@@ -416,6 +425,14 @@ def nn_least_squares_refit(features, responses, mask, eval_data, depth_g=1, widt
 	if device.type == 'cuda' and not torch.cuda.is_available():
 		print('CUDA not available, falling back to CPU')
 		device = torch.device('cpu')
+
+	# check compute capability to avoid "no kernel image" errors on older GPUs
+	if device.type == 'cuda':
+		dev_index = device.index if device.index is not None else 0
+		cap = torch.cuda.get_device_capability(dev_index)
+		if cap[0] < 7:
+			print(f"GPU compute capability {cap[0]}.{cap[1]} is lower than supported (7.0). Falling back to CPU.")
+			device = torch.device('cpu')
 
 	# move model and gate to device
 	model.to(device)
