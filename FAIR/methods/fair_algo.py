@@ -319,7 +319,9 @@ class FairGumbelAlgo(object):
 				if device.type == 'cuda':
 					torch.cuda.synchronize()
 				iter_time = time.time() - iter_start
-				print(f"Iteration {it} time: {iter_time:.3f}s")
+
+				if it % 1000 == 0:
+					print(f"Iteration {it} time: {iter_time:.3f}s")
 
 			if it % save_iter == 0:
 				with torch.no_grad():
