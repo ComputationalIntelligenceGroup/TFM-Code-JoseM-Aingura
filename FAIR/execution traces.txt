@@ -1,0 +1,101 @@
+(FCI-FS_env_v2) C:\Users\chdem\0UNIVERSIDAD\Aingura\TFM-Code-Aingura\external\FAIR>python examples.py --seed 8 --n 1000 --setup linear
+Training environments: 10
+Train env 0: (10000, 10)
+Train env 1: (10000, 10)
+Train env 2: (10000, 10)
+Train env 3: (10000, 10)
+Train env 4: (10000, 10)
+Train env 5: (10000, 10)
+Train env 6: (10000, 10)
+Train env 7: (10000, 10)
+Train env 8: (10000, 10)
+Train env 9: (5000, 10)
+Validation: (5000, 10)
+Test: (3699, 10)
+Number of environments: 10
+Env 0: (10000, 10)
+Env 1: (10000, 10)
+Env 2: (10000, 10)
+Env 3: (10000, 10)
+Env 4: (10000, 10)
+Env 5: (10000, 10)
+Env 6: (10000, 10)
+Env 7: (10000, 10)
+Env 8: (10000, 10)
+Env 9: (5000, 10)
+FairMLP Predictor Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (0) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (1) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (2) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (3) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (4) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (5) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (6) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (7) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (8) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+FairMLP Discriminator (9) Module Parameters:
+Parameter Shape = torch.Size([1, 10])
+Parameter Shape = torch.Size([1])
+iteration (4999/50000), valid_loss = [0.6464429], test_loss = [0.6982095]
+gate logits = [0.06, 0.07, 0.08, 0.28, 0.04, 0.06, 0.04, 0.03, 0.04, 0.05,]
+gate est = [0.32, 0.35, 0.34, 0.42, 0.27, 0.31, 0.32, 0.28, 0.29, 0.31,]
+iteration (9999/50000), valid_loss = [0.8375165], test_loss = [0.80354804]
+gate logits = [0.06, 0.07, 0.13, 0.46, 0.03, 0.07, 0.03, 0.02, 0.03, 0.05,]
+gate est = [0.28, 0.29, 0.32, 0.50, 0.24, 0.29, 0.20, 0.22, 0.20, 0.26,]
+iteration (14999/50000), valid_loss = [0.9877911], test_loss = [1.1483333]
+gate logits = [0.08, 0.08, 0.31, 0.77, 0.03, 0.07, 0.02, 0.02, 0.02, 0.05,]
+gate est = [0.21, 0.24, 0.36, 0.67, 0.15, 0.22, 0.13, 0.13, 0.11, 0.23,]
+iteration (19999/50000), valid_loss = [1.0716264], test_loss = [1.5479387]
+gate logits = [0.08, 0.09, 0.71, 0.96, 0.02, 0.07, 0.01, 0.01, 0.01, 0.06,]
+gate est = [0.20, 0.18, 0.63, 0.83, 0.09, 0.16, 0.09, 0.05, 0.05, 0.17,]
+iteration (24999/50000), valid_loss = [1.1541235], test_loss = [1.4835114]
+gate logits = [0.08, 0.07, 0.93, 0.99, 0.03, 0.05, 0.02, 0.02, 0.01, 0.11,]
+gate est = [0.15, 0.13, 0.89, 0.96, 0.06, 0.15, 0.06, 0.05, 0.05, 0.21,]
+iteration (29999/50000), valid_loss = [1.2308384], test_loss = [1.4354273]
+gate logits = [0.07, 0.05, 0.98, 0.99, 0.04, 0.04, 0.02, 0.02, 0.02, 0.28,]
+gate est = [0.09, 0.07, 0.96, 0.99, 0.07, 0.05, 0.03, 0.02, 0.03, 0.35,]
+iteration (34999/50000), valid_loss = [1.1506164], test_loss = [1.3739854]
+gate logits = [0.05, 0.03, 0.99, 1.00, 0.05, 0.03, 0.03, 0.02, 0.02, 0.70,]
+gate est = [0.08, 0.02, 0.99, 0.99, 0.06, 0.07, 0.07, 0.03, 0.02, 0.73,]
+iteration (39999/50000), valid_loss = [1.0747315], test_loss = [1.1554374]
+gate logits = [0.04, 0.02, 0.99, 1.00, 0.06, 0.03, 0.04, 0.02, 0.02, 0.94,]
+gate est = [0.08, 0.04, 0.98, 1.00, 0.05, 0.04, 0.04, 0.03, 0.01, 0.94,]
+iteration (44999/50000), valid_loss = [1.0554644], test_loss = [1.1825619]
+gate logits = [0.04, 0.02, 1.00, 1.00, 0.07, 0.03, 0.06, 0.03, 0.02, 0.98,]
+gate est = [0.08, 0.02, 1.00, 0.98, 0.12, 0.02, 0.08, 0.02, 0.03, 0.97,]
+iteration (49999/50000), valid_loss = [1.0458467], test_loss = [1.069517]
+gate logits = [0.03, 0.02, 1.00, 1.00, 0.08, 0.03, 0.07, 0.03, 0.03, 0.99,]
+gate est = [0.02, 0.02, 1.00, 1.00, 0.09, 0.03, 0.03, 0.04, 0.01, 0.99,]
+Estimated beta = [ 2.64152040e-04 -3.07766284e-04  1.49104252e-01 -1.01426768e+00
+  2.15654285e-03 -1.06479274e-04  2.13481928e-03  9.29489150e-04
+  1.28292583e-03  3.17085028e-01]
+bal_150: 0.000264
+bal_250: -0.000308
+bal_350: 0.149104
+bal_energy_band_low: -1.014268
+bal_energy_band_medium: 0.002157
+bal_energy_band_high: -0.000106
+6004_FTF: 0.002135
+6004_BSF: 0.000929
+6004_BPFO: 0.001283
+6004_BPFI: 0.317085
