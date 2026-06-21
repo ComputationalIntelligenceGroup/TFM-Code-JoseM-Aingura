@@ -7,7 +7,7 @@ The original repository and authorship belong to the authors of the paper. This 
 ## Original Work
 
 * Paper: https://arxiv.org/pdf/2405.04715
-* Original repository: https://github.com/xiangyu-sun-789/FAIR
+* Original repository: [https://github.com/xiangyu-sun-789/FAIR](https://github.com/wmyw96/FAIR)
 
 Original repository description:
 
