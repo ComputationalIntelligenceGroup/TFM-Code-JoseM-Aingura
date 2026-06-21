@@ -195,6 +195,25 @@ class FairGumbelAlgo(object):
 			test_xs = [torch.tensor(test_feature).float() for test_feature in test_features]
 			test_ys = [test_y + 0.0 for test_y in test_responses]
 
+		# resolve device (accept 'gpu' or 'cuda' or torch.device)
+		if isinstance(device, str) and device.lower() == 'gpu':
+			device = 'cuda'
+		if isinstance(device, str):
+			device = torch.device(device)
+		else:
+			device = torch.device(device)
+		if device.type == 'cuda' and not torch.cuda.is_available():
+			print('CUDA not available, falling back to CPU')
+			device = torch.device('cpu')
+
+		# move model to device
+		self.model.to(device)
+
+		# move validation/test tensors to device if they exist
+		if eval_metric is not None:
+			valid_xs = [x.to(device) for x in valid_xs]
+			test_xs = [x.to(device) for x in test_xs]
+
 		# Build Gumbel gate
 		if varmask is None:
 			varmask = np.zeros((self.dim_x,))
@@ -232,6 +251,9 @@ class FairGumbelAlgo(object):
 				self.model.train()
 
 				xs, ys = dataset.next_batch(batch_size)
+				# move batch to device
+				xs = [x.to(device) for x in xs]
+				ys = [y.to(device) for y in ys]
 				cat_y = torch.cat(ys, 0)
 				# detach the gate output because we do not wish the gradient back-propagate through gumbel module
 				gate = model_var.generate_mask((1, tau)).detach()
@@ -249,6 +271,9 @@ class FairGumbelAlgo(object):
 				self.model.train()
 
 				xs, ys = dataset.next_batch(batch_size)
+				# move batch to device
+				xs = [x.to(device) for x in xs]
+				ys = [y.to(device) for y in ys]
 				gate = model_var.generate_mask((1, tau))
 				cat_y = torch.cat(ys, 0)
 				out_g, out_f = self.model([gate * x for x in xs])
@@ -272,7 +297,7 @@ class FairGumbelAlgo(object):
 				if eval_metric is not None:
 
 					train_xs = [
-						torch.tensor(train_feature).float()
+						torch.tensor(train_feature).float().to(device)
 						for train_feature in features
 					]
 
@@ -336,7 +361,7 @@ class FairGumbelAlgo(object):
 
 def nn_least_squares_refit(features, responses, mask, eval_data, depth_g=1, width_g=128,
 						learning_rate=1e-3, niters=10000, weight_decay_g=1e-3,
-						batch_size=64, log=False):
+						batch_size=64, log=False, device='cpu'):
 	'''
 		Refit the model using least squares and neural network on varaibles selected by mask
 
@@ -380,18 +405,33 @@ def nn_least_squares_refit(features, responses, mask, eval_data, depth_g=1, widt
 	fixed_gate = torch.reshape(torch.tensor(mask).float(), (1, dim_x))
 
 	model = ReLUMLP(dim_x, depth_g, width_g)
+
+	# resolve device (accept 'gpu' or 'cuda' or torch.device)
+	if isinstance(device, str) and device.lower() == 'gpu':
+		device = 'cuda'
+	if isinstance(device, str):
+		device = torch.device(device)
+	else:
+		device = torch.device(device)
+	if device.type == 'cuda' and not torch.cuda.is_available():
+		print('CUDA not available, falling back to CPU')
+		device = torch.device('cpu')
+
+	# move model and gate to device
+	model.to(device)
+	fixed_gate = fixed_gate.to(device)
 	optimizer_g = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay_g)
 
 	# construct dataset from numpy array
 	dataset = MultiEnvDataset(features, responses)
 	
 	valid_x, valid_y, test_x, test_y = eval_data
-	valid_x_th = torch.tensor(valid_x).float()
+	valid_x_th = torch.tensor(valid_x).float().to(device)
 
 	if isinstance(test_x, list):
-		test_x_ths = [torch.tensor(x).float() for x in test_x]
+		test_x_ths = [torch.tensor(x).float().to(device) for x in test_x]
 	else:
-		test_x_ths = torch.tensor(test_x).float()
+		test_x_ths = torch.tensor(test_x).float().to(device)
 
 	eval_iter = niters // 20
 	
