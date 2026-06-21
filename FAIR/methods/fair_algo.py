@@ -126,7 +126,7 @@ class FairMLP(FairModel):
 
 		self.g = ReLUMLP(input_dim=dim_x, depth=depth_g, width=width_g, out_act=out_act_g)
 		self.num_envs = num_envs
-		self.fs = []
+		self.fs = nn.ModuleList()
 		for e in range(num_envs):
 			fe = ReLUMLP(input_dim=dim_x, depth=depth_f, width=width_f, out_act=out_act_f)
 			self.fs.append(fe)
