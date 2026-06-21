@@ -168,7 +168,7 @@ feature_names = list(
 
 
 packs = algo.run_gumbel((xs, ys), eval_metric=np_mse, me_valid_data=valid, me_test_data=test,
-                       eval_iter=niters//10, log=True, device='gpu', diagnostics=False)
+                       eval_iter=niters//10, log=True, device='gpu', diagnostics=True)
 print(packs.keys())
 
 print_gate_during_training_features(
