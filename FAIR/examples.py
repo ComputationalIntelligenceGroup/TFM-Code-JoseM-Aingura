@@ -8,6 +8,9 @@ import argparse
 import time
 import torch
 
+# Enable cuDNN autotune for potential speedups
+torch.backends.cudnn.benchmark = True
+
 parser = argparse.ArgumentParser()
 
 # common setup
@@ -141,6 +144,7 @@ if args.setup == 'nonlinear':
 from copy import deepcopy
 hyper_params = deepcopy(aos_default_hyper_params)
 hyper_params['niters'] = niters
+hyper_params['batch_size'] = 256
 
 # Set losses
 def np_mse(x, y):
@@ -163,7 +167,8 @@ feature_names = list(
 )
 
 
-packs = algo.run_gumbel((xs, ys), eval_metric=np_mse, me_valid_data=valid, me_test_data=test, eval_iter=niters//10, log=True)
+packs = algo.run_gumbel((xs, ys), eval_metric=np_mse, me_valid_data=valid, me_test_data=test,
+                       eval_iter=niters//10, log=True, device='gpu', diagnostics=True)
 print(packs.keys())
 
 print_gate_during_training_features(
