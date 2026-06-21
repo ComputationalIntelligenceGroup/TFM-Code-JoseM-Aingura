@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_PATH = r"..\data2\MT002_ENSAYO_3_NEW_FEATURES.csv"
+CSV_PATH = r"..\data2\MT002_ENSAYO3_3070_IE08_KPI.csv"
 
 SEP = ";"
 TIME_COL = "timestamp"
