@@ -1,6 +1,7 @@
 from http.client import responses
 
 import numpy as np
+import time
 import torch
 import torch.nn as nn
 from collections import OrderedDict
@@ -172,7 +173,7 @@ class FairGumbelAlgo(object):
 		assert self.model.num_envs == num_envs
 		assert self.model.dim_x == dim_x
 
-	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=100, device='gpu', log=False):
+	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=100, device='gpu', log=False, diagnostics=False):
 		# Build multi-environment training dataset that contains 'self.num_envs' number of environments
 		features, responses = me_train_data		
 		assert len(features) == self.num_envs
@@ -218,10 +219,26 @@ class FairGumbelAlgo(object):
 		# move model to device
 		self.model.to(device)
 
+		# diagnostics: print environment and device placements
+		if diagnostics:
+			print(f"PyTorch: {torch.__version__}, CUDA available: {torch.cuda.is_available()}")
+			print(f"Selected device: {device}")
+			if device.type == 'cuda':
+				try:
+					dev_index = device.index if device.index is not None else 0
+					print(f"CUDA device name: {torch.cuda.get_device_name(dev_index)}")
+					print(f"CUDA capability: {torch.cuda.get_device_capability(dev_index)}")
+				except Exception:
+					pass
+			# model parameter device
+			p = next(self.model.parameters(), None)
+			if p is not None:
+				print(f"Model parameters device: {p.device}")
+
 		# move validation/test tensors to device if they exist
 		if eval_metric is not None:
-			valid_xs = [x.to(device) for x in valid_xs]
-			test_xs = [x.to(device) for x in test_xs]
+			valid_xs = [x.to(device, non_blocking=True) for x in valid_xs]
+			test_xs = [x.to(device, non_blocking=True) for x in test_xs]
 
 		# Build Gumbel gate
 		if varmask is None:
@@ -244,10 +261,13 @@ class FairGumbelAlgo(object):
 		anneal_rate, anneal_iter = self.hyper_params['anneal_rate'], self.hyper_params['anneal_iter']
 		batch_size = self.hyper_params['batch_size']
 
+		print(f"Training with {self.num_envs} environments, {self.dim_x} features, {niters} iterations, {giters} generator iterations, {diters} discriminator iterations, batch size {batch_size}, initial temperature {tau}, final temperature {final_temp}, anneal rate {anneal_rate}, anneal interval {anneal_iter}, gamma {gamma}")
+
 		loss_rec = []
 		gate_rec = []
 
 		for it in range(niters):
+			iter_start = time.time()
 			# anneal the temperature
 			if (it + 1) % anneal_iter == 0:
 				tau = max(tau * anneal_rate, final_temp)
@@ -261,8 +281,8 @@ class FairGumbelAlgo(object):
 
 				xs, ys = dataset.next_batch(batch_size)
 				# move batch to device
-				xs = [x.to(device) for x in xs]
-				ys = [y.to(device) for y in ys]
+				xs = [x.to(device, non_blocking=True) for x in xs]
+				ys = [y.to(device, non_blocking=True) for y in ys]
 				cat_y = torch.cat(ys, 0)
 				# detach the gate output because we do not wish the gradient back-propagate through gumbel module
 				gate = model_var.generate_mask((1, tau)).detach()
@@ -281,8 +301,8 @@ class FairGumbelAlgo(object):
 
 				xs, ys = dataset.next_batch(batch_size)
 				# move batch to device
-				xs = [x.to(device) for x in xs]
-				ys = [y.to(device) for y in ys]
+				xs = [x.to(device, non_blocking=True) for x in xs]
+				ys = [y.to(device, non_blocking=True) for y in ys]
 				gate = model_var.generate_mask((1, tau))
 				cat_y = torch.cat(ys, 0)
 				out_g, out_f = self.model([gate * x for x in xs])
@@ -293,6 +313,13 @@ class FairGumbelAlgo(object):
 				loss.backward()
 				optimizer_g.step()
 				optimizer_var.step()
+
+			# diagnostics: time per iteration
+			if diagnostics:
+				if device.type == 'cuda':
+					torch.cuda.synchronize()
+				iter_time = time.time() - iter_start
+				print(f"Iteration {it} time: {iter_time:.3f}s")
 
 			if it % save_iter == 0:
 				with torch.no_grad():
@@ -306,7 +333,7 @@ class FairGumbelAlgo(object):
 				if eval_metric is not None:
 
 					train_xs = [
-						torch.tensor(train_feature).float().to(device)
+						torch.tensor(train_feature).float().to(device, non_blocking=True)
 						for train_feature in features
 					]
 
@@ -318,15 +345,24 @@ class FairGumbelAlgo(object):
 					train_loss = []
 
 					for e in range(len(train_xs)):
+						# eval timing start
+						if diagnostics:
+							eval_start = time.time()
 						preds = []
 
 						for k in range(gate_samples):
 							gate = model_var.generate_mask((1, tau))
 							pred = self.model(gate * train_xs[e], pred=True)
-							preds.append(pred.detach().cpu().numpy())
+							preds.append(pred.detach())
 
-						out = sum(preds) / len(preds)
+						# aggregate on device then move once to CPU
+						out = torch.stack(preds).mean(0).cpu().numpy()
 						train_loss.append(eval_metric(out, train_ys[e]))
+
+						if diagnostics:
+							if device.type == 'cuda':
+								torch.cuda.synchronize()
+							print(f"Eval sample train env {e} time: {time.time() - eval_start:.3f}s")
 						
 					valid_loss = []
 					for e in range(len(valid_xs)):
@@ -335,8 +371,8 @@ class FairGumbelAlgo(object):
 						for k in range(gate_samples):
 							gate = model_var.generate_mask((1, tau))
 							pred = self.model(gate * valid_xs[e], pred=True)
-							preds.append(pred.detach().cpu().numpy())
-						out = sum(preds) / len(preds)
+							preds.append(pred.detach())
+						out = torch.stack(preds).mean(0).cpu().numpy()
 						valid_loss.append(eval_metric(out, valid_ys[e]))
 
 					test_loss = []
@@ -344,13 +380,16 @@ class FairGumbelAlgo(object):
 					# calculate test loss
 					for e in range(len(test_xs)):
 						preds = []
+						gate_list = []
 						for k in range(gate_samples):
 							gate = model_var.generate_mask((1, tau))
 							pred = self.model(gate * test_xs[e], pred=True)
-							preds.append(pred.detach().cpu().numpy())
-							gates.append((gate).detach().cpu().numpy() + 0.0)
-						out = sum(preds) / len(preds)
+							preds.append(pred.detach())
+							gate_list.append(gate.detach())
+						# aggregate predictions and gates on device then move once
+						out = torch.stack(preds).mean(0).cpu().numpy()
 						test_loss.append(eval_metric(out, test_ys[e]))
+						gates.append(torch.stack(gate_list).mean(0).cpu().numpy() + 0.0)
 
 					loss_rec.append(train_loss + valid_loss + test_loss)
 				else:
