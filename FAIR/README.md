@@ -1,7 +1,21 @@
-# Focused Adversarial Invariance Regularized Estimation
+# Focused Adversarial Invariance Regularized Estimation (FAIR)
 
+This directory contains a local copy of the FAIR implementation originally developed by the authors of *"Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning"*.
 
-This repository contains code to reproduce the simulation and real dataset application in our manuscript [Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning](https://arxiv.org/pdf/2405.04715). We also provide a unified implementation and interface to run the algorithm using user-specified function class and loss.
+The original repository and authorship belong to the authors of the paper. This copy is included in this project solely to facilitate reproducibility and experimentation within the context of this repository.
+
+## Original Work
+
+* Paper: https://arxiv.org/pdf/2405.04715
+* Original repository: https://github.com/xiangyu-sun-789/FAIR
+
+Original repository description:
+
+> This repository contains code to reproduce the simulation and real dataset application in our manuscript *Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning*. We also provide a unified implementation and interface to run the algorithm using user-specified function class and loss.
+
+## Modifications
+
+This copy may contain modifications made for experiments and integration purposes within this repository. Such modifications are not part of the original FAIR implementation and should not be attributed to the original authors.
 
 
 To cite this paper:
