@@ -70,6 +70,10 @@ X = df.drop(
     columns=cols_to_drop
 ).to_numpy(dtype=np.float32)
 
+feature_names = list(
+    df.drop(columns=cols_to_drop).columns
+)
+
 print("Target column:", target_col)
 print("Columns removed from X:", cols_to_drop)
 print("X shape:", X.shape)
@@ -176,9 +180,7 @@ algo = FairGumbelAlgo(
     torch_mse,
     hyper_params
 )
-feature_names = list(
-    df.drop(columns=[timestamp_col, target_col]).columns
-)
+
 
 
 valid = ([xs[-1]], [ys[-1]])
@@ -195,6 +197,8 @@ packs = algo.run_gumbel(
     diagnostics=True
 )
 print(packs.keys())
+
+
 
 print_gate_during_training_features(
     feature_names,
@@ -217,7 +221,7 @@ else:
 	print(packs['loss_rec'])
 
 
-feature_names = df.drop(columns=[timestamp_col, target_col]).columns
+
 
 
 
