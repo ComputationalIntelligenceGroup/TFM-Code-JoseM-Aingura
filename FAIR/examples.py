@@ -107,81 +107,38 @@ final_endpoint = n_total
 # train environments before the last environment
 # ---------------------------------------------------
 
-train_breaks = [0] + changepoints
+# ---------------------------------------------------
+# build environments using changepoints
+# ---------------------------------------------------
+
+changepoints = [
+    2460, 21325, 27365, 33015, 41890,
+    54895, 58030, 68965, 89525, 98150
+]
+
+n_total = len(X)
+
+# Añadimos inicio y final real del dataset
+breaks = [0] + changepoints + [n_total]
+
+# Mantener solo cortes válidos
+breaks = sorted(set(b for b in breaks if 0 <= b <= n_total))
 
 xs = []
 ys = []
 
-# Esto crea entornos hasta [89525, 98150)
-# NO incluye todavía [98150, len(X))
-for start, end in zip(train_breaks[:-1], train_breaks[1:]):
-    xs.append(X[start:end])
-    ys.append(y[start:end].reshape(-1, 1))
-
-# ---------------------------------------------------
-# split final environment [98150, len(X))
-# ---------------------------------------------------
-
-X_last_env = X[last_internal_cp:final_endpoint]
-y_last_env = y[last_internal_cp:final_endpoint]
-
-n_last_env = len(X_last_env)
-
-last_train_ratio = 0.50
-last_valid_ratio = 0.25
-
-last_train_end = int(n_last_env * last_train_ratio)
-last_valid_end = int(n_last_env * (last_train_ratio + last_valid_ratio))
-
-X_last_train = X_last_env[:last_train_end]
-y_last_train = y_last_env[:last_train_end]
-
-X_valid = X_last_env[last_train_end:last_valid_end]
-y_valid = y_last_env[last_train_end:last_valid_end]
-
-X_test = X_last_env[last_valid_end:]
-y_test = y_last_env[last_valid_end:]
-
-# Añadir la parte train del último entorno como entorno de entrenamiento
-xs.append(X_last_train)
-ys.append(y_last_train.reshape(-1, 1))
+for start, end in zip(breaks[:-1], breaks[1:]):
+    if end > start:
+        xs.append(X[start:end])
+        ys.append(y[start:end].reshape(-1, 1))
 
 num_envs = len(xs)
 
-# ---------------------------------------------------
-# validation/test format
-# ---------------------------------------------------
-
-valid = (
-    [X_valid],
-    [y_valid.reshape(-1, 1)]
-)
-
-test = (
-    [X_test],
-    [y_test.reshape(-1, 1)]
-)
-
-# ---------------------------------------------------
-# prints
-# ---------------------------------------------------
-
 print(f"Total samples: {n_total}")
-print(f"Last internal changepoint: {last_internal_cp}")
-print(f"Final endpoint: {final_endpoint}")
+print(f"Number of environments: {num_envs}")
 
-print(f"Final environment: [{last_internal_cp}, {final_endpoint})")
-print(f"Final environment size: {n_last_env}")
-
-print(f"\nTraining environments: {num_envs}")
-
-for i in range(num_envs):
-    print(f"Train env {i}: {xs[i].shape}")
-
-print("\nFinal environment split:")
-print(f"  Last train part: {X_last_train.shape}")
-print(f"  Validation part: {X_valid.shape}")
-print(f"  Test part: {X_test.shape}")
+for i, (x_env, y_env) in enumerate(zip(xs, ys)):
+    print(f"Env {i}: X={x_env.shape}, y={y_env.shape}")
 
 if args.setup == 'linear':
 	
@@ -224,7 +181,7 @@ feature_names = list(
 )
 
 
-packs = algo.run_gumbel((xs, ys), eval_metric=np_mse, me_valid_data=valid, me_test_data=test,
+packs = algo.run_gumbel((xs, ys), eval_metric=np_mse, me_valid_data=None, me_test_data=None,
                        eval_iter=niters//10, log=True, device='gpu', diagnostics=True)
 print(packs.keys())
 
