@@ -16,20 +16,20 @@ parser = argparse.ArgumentParser()
 # common setup
 parser.add_argument("--seed", help="random seed", type=int, default=9)
 parser.add_argument("--n", help="number of samples", type=int, default=2000)
-parser.add_argument("--setup", help="setup: (linear) or (nonlinear)", type=str, default='linear')
+parser.add_argument("--setup", help="setup: (linear) or (nonlinear)", type=str, default="linear")
 
+parser.add_argument("--target_col", help="target column name", type=str, default="likelihood")
+parser.add_argument(
+    "--remove_cols",
+    help="extra columns to remove from X, separated by commas",
+    type=str,
+    default=""
+)
 
 args = parser.parse_args()
 
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-
-
-# Set data generating process and model
-
-
-
-
 
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -42,13 +42,38 @@ df = pd.read_csv(
 df = df.dropna()
 
 timestamp_col = "timestamp"
-target_col = "likelihood"
+target_col = args.target_col
+
+# Convertir string "a,b,c" en lista ["a", "b", "c"]
+extra_remove_cols = [
+    col.strip()
+    for col in args.remove_cols.split(",")
+    if col.strip() != ""
+]
+
+# Comprobar que target existe
+if target_col not in df.columns:
+    raise ValueError(f"Target column '{target_col}' not found in dataframe.")
+
+# Columnas a eliminar de X
+cols_to_drop = [timestamp_col, target_col] + extra_remove_cols
+
+# Comprobar columnas inexistentes
+missing_cols = [col for col in cols_to_drop if col not in df.columns]
+
+if missing_cols:
+    raise ValueError(f"Columns not found in dataframe: {missing_cols}")
 
 y = df[target_col].to_numpy(dtype=np.float32)
 
 X = df.drop(
-    columns=[timestamp_col, target_col]
+    columns=cols_to_drop
 ).to_numpy(dtype=np.float32)
+
+print("Target column:", target_col)
+print("Columns removed from X:", cols_to_drop)
+print("X shape:", X.shape)
+print("y shape:", y.shape)
 
 X = StandardScaler().fit_transform(X).astype(np.float32)
 
@@ -59,72 +84,104 @@ y = StandardScaler().fit_transform(
 dim_x = X.shape[1]
 
 # ---------------------------------------------------
-# temporal split
+# changepoint-based split
 # ---------------------------------------------------
+
+changepoints = [
+    2460, 21325, 27365, 33015, 41890,
+    54895, 58030, 68965, 89525, 98150
+]
 
 n_total = len(X)
 
-train_end = int(95000)
-valid_end = int(100000)
+# Mantener solo changepoints internos válidos
+changepoints = [cp for cp in changepoints if 0 < cp < n_total]
 
-X_train = X[:train_end]
-y_train = y[:train_end]
+# Este es el último changepoint interno: 98150
+last_internal_cp = changepoints[-1]
 
-X_valid = X[train_end:valid_end]
-y_valid = y[train_end:valid_end]
-
-X_test = X[valid_end:]
-y_test = y[valid_end:]
+# Este es el final real del dataset, no aparece en changepoints
+final_endpoint = n_total
 
 # ---------------------------------------------------
-# build train environments
+# train environments before the last environment
 # ---------------------------------------------------
 
-env_size = 10000
+train_breaks = [0] + changepoints
 
 xs = []
 ys = []
 
-for start in range(0, len(X_train), env_size):
+# Esto crea entornos hasta [89525, 98150)
+# NO incluye todavía [98150, len(X))
+for start, end in zip(train_breaks[:-1], train_breaks[1:]):
+    xs.append(X[start:end])
+    ys.append(y[start:end].reshape(-1, 1))
 
-    end = min(start + env_size, len(X_train))
+# ---------------------------------------------------
+# split final environment [98150, len(X))
+# ---------------------------------------------------
 
-    xs.append(X_train[start:end])
+X_last_env = X[last_internal_cp:final_endpoint]
+y_last_env = y[last_internal_cp:final_endpoint]
 
-    ys.append(
-        y_train[start:end].reshape(-1, 1)
-    )
+n_last_env = len(X_last_env)
+
+last_train_ratio = 0.50
+last_valid_ratio = 0.25
+
+last_train_end = int(n_last_env * last_train_ratio)
+last_valid_end = int(n_last_env * (last_train_ratio + last_valid_ratio))
+
+X_last_train = X_last_env[:last_train_end]
+y_last_train = y_last_env[:last_train_end]
+
+X_valid = X_last_env[last_train_end:last_valid_end]
+y_valid = y_last_env[last_train_end:last_valid_end]
+
+X_test = X_last_env[last_valid_end:]
+y_test = y_last_env[last_valid_end:]
+
+# Añadir la parte train del último entorno como entorno de entrenamiento
+xs.append(X_last_train)
+ys.append(y_last_train.reshape(-1, 1))
 
 num_envs = len(xs)
 
 # ---------------------------------------------------
-# validation/test
+# validation/test format
 # ---------------------------------------------------
 
-xvs = [X_valid]
-yvs = [y_valid.reshape(-1, 1)]
+valid = (
+    [X_valid],
+    [y_valid.reshape(-1, 1)]
+)
 
-xts = [X_test]
-yts = [y_test.reshape(-1, 1)]
+test = (
+    [X_test],
+    [y_test.reshape(-1, 1)]
+)
 
-valid = (xvs, yvs)
-test = (xts, yts)
+# ---------------------------------------------------
+# prints
+# ---------------------------------------------------
 
-print(f"Training environments: {num_envs}")
+print(f"Total samples: {n_total}")
+print(f"Last internal changepoint: {last_internal_cp}")
+print(f"Final endpoint: {final_endpoint}")
+
+print(f"Final environment: [{last_internal_cp}, {final_endpoint})")
+print(f"Final environment size: {n_last_env}")
+
+print(f"\nTraining environments: {num_envs}")
 
 for i in range(num_envs):
     print(f"Train env {i}: {xs[i].shape}")
 
-print(f"Validation: {X_valid.shape}")
-print(f"Test: {X_test.shape}")
-
-print(f"Number of environments: {num_envs}")
-
-for i in range(num_envs):
-    print(f"Env {i}: {xs[i].shape}")
-
-
-
+print("\nFinal environment split:")
+print(f"  Last train part: {X_last_train.shape}")
+print(f"  Validation part: {X_valid.shape}")
+print(f"  Test part: {X_test.shape}")
 
 if args.setup == 'linear':
 	
